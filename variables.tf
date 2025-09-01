@@ -16,4 +16,5 @@ variable "zone" {
 
 variable "instance_count" {
   description = "Number of VM instances to create"
+  default = 1
 }
