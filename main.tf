@@ -1,66 +1,60 @@
-name: Deploy to GCP VM
+resource "google_compute_network" "vpc_network" {
+  name = "server-networks"
+}
 
-on:
-  push:
-    branches:
-      - main   # Trigger on push to main
+resource "google_compute_firewall" "ssh" {
+  name    = "allow-ssh"
+  network = google_compute_network.vpc_network.name
 
-jobs:
-  terraform:
-    runs-on: ubuntu-latest
+  allow {
+    protocol = "tcp"
+    ports    = ["22"]
+  }
 
-    steps:
-      # Checkout repo
-      - name: Checkout
-        uses: actions/checkout@v4
+  source_ranges = ["0.0.0.0/0"]
+}
 
-      # Setup Terraform
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+resource "google_compute_firewall" "web_ports" {
+  name    = "allow-web-traffic"
+  network = google_compute_network.vpc_network.name
 
-      # Authenticate with GCP using service account JSON from GitHub Secrets
-      - name: Authenticate to GCP
-        id: auth
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+  allow {
+    protocol = "tcp"
+    ports    = ["80", "443", "8080", "3000", "3001", "4000"]
+  }
 
-      # Setup gcloud CLI (uses auth credentials from above step)
-      - name: Set up gcloud CLI
-        uses: google-github-actions/setup-gcloud@v2
-        with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
-          install_components: gke-gcloud-auth-plugin
-          export_default_credentials: true
+  source_ranges = ["0.0.0.0/0"]
 
-      # 🔍 Debug step - confirm authentication worked
-      - name: Verify GCP Key & Auth
-        run: |
-          echo "Using credentials file: $GOOGLE_APPLICATION_CREDENTIALS"
-          echo "Key details:"
-          cat $GOOGLE_APPLICATION_CREDENTIALS | jq '.client_email, .project_id'
+  target_tags = ["web-enabled"]
+}
 
-          echo "Activating service account..."
-          gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS
+# ==============================
+# Compute Instance
+# ==============================
+resource "google_compute_instance" "fastapi_vm" {
+  name         = "fastapi-server"
+  machine_type = "e2-medium"
+  zone         = var.zone
 
-          echo "Listing active accounts..."
-          gcloud auth list
+  tags = ["web-enabled"]
 
-          echo "Describing project..."
-          gcloud projects describe ${{ secrets.GCP_PROJECT_ID }}
+  boot_disk {
+    initialize_params {
+      image = "debian-cloud/debian-11"
+    }
+  }
 
-      # Terraform Init
-      - name: Terraform Init
-        run: terraform init
+  network_interface {
+    network = google_compute_network.vpc_network.name
+    access_config {} # Needed for external IP
+  }
 
-      # Terraform Plan
-      - name: Terraform Plan
-        run: terraform plan -out=tfplan
+  # Run deployment.sh automatically on boot
+  metadata_startup_script = file("${path.module}/deployment.sh")
+}
 
-      # Terraform Apply
-      - name: Terraform Apply
-        run: terraform apply -auto-approve tfplan
 
-      # Show Terraform Outputs (e.g. VM external IP)
-      - name: Show VM Outputs
-        run: terraform output
+output "fastapi_vm_ip" {
+  description = "Public IP of the FastAPI VM"
+  value       = google_compute_instance.fastapi_vm.network_interface[0].access_config[0].nat_ip
+}
