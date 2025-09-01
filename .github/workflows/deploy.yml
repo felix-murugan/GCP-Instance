@@ -25,29 +25,17 @@ jobs:
         with:
           credentials_json: ${{ secrets.GCP_CREDENTIALS }}
 
-      # Setup gcloud CLI (uses auth credentials from above step)
-      - name: Set up gcloud CLI
+      # Install gcloud CLI (auth is already handled above)
+      - name: Setup gcloud CLI
         uses: google-github-actions/setup-gcloud@v2
         with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
           install_components: gke-gcloud-auth-plugin
-          export_default_credentials: true
 
-      # 🔍 Debug step - confirm authentication worked
-      - name: Verify GCP Key & Auth
+      # Debug step (optional) - confirm authentication worked
+      - name: Verify gcloud authentication
         run: |
-          echo "Using credentials file: $GOOGLE_APPLICATION_CREDENTIALS"
-          echo "Key details:"
-          cat $GOOGLE_APPLICATION_CREDENTIALS | jq '.client_email, .project_id'
-
-          echo "Activating service account..."
-          gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS
-
-          echo "Listing active accounts..."
           gcloud auth list
-
-          echo "Describing project..."
-          gcloud projects describe ${{ secrets.GCP_PROJECT_ID }}
+          gcloud config list project
 
       # Terraform Init
       - name: Terraform Init
