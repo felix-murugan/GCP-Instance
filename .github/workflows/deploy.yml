@@ -25,11 +25,10 @@ jobs:
         with:
           credentials_json: ${{ secrets.GCP_CREDENTIALS }}
 
-      # Setup gcloud CLI (uses auth credentials from above step)
-      - name: Set up gcloud CLI
+      # Install gcloud CLI (auth is already handled above)
+      - name: Setup gcloud CLI
         uses: google-github-actions/setup-gcloud@v2
         with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
           install_components: gke-gcloud-auth-plugin
 
       # Debug step (optional) - confirm authentication worked
@@ -53,4 +52,3 @@ jobs:
       # Show Terraform Outputs (e.g. VM external IP)
       - name: Show VM Outputs
         run: terraform output
-        
