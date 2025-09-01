@@ -53,3 +53,4 @@ jobs:
       # Show Terraform Outputs (e.g. VM external IP)
       - name: Show VM Outputs
         run: terraform output
+        
