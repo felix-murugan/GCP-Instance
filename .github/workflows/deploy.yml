@@ -20,6 +20,7 @@ jobs:
 
       # Authenticate with GCP using service account JSON from GitHub Secrets
       - name: Authenticate to GCP
+        id: auth
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_CREDENTIALS }}
@@ -30,6 +31,12 @@ jobs:
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
           install_components: gke-gcloud-auth-plugin
+
+      # Debug step (optional) - confirm authentication worked
+      - name: Verify gcloud authentication
+        run: |
+          gcloud auth list
+          gcloud config list project
 
       # Terraform Init
       - name: Terraform Init
