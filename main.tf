@@ -20,10 +20,35 @@ resource "google_compute_firewall" "web_ports" {
 
   allow {
     protocol = "tcp"
-    ports    = ["80", "443", "8080","3000","3001","4000"]
+    ports    = ["80", "443", "8080", "3000", "3001", "4000"]
   }
 
   source_ranges = ["0.0.0.0/0"]
 
   target_tags = ["web-enabled"]
+}
+
+# ==============================
+# Compute Instance
+# ==============================
+resource "google_compute_instance" "fastapi_vm" {
+  name         = "fastapi-server"
+  machine_type = "e2-medium"
+  zone         = var.zone
+
+  tags = ["web-enabled"]
+
+  boot_disk {
+    initialize_params {
+      image = "debian-cloud/debian-11"
+    }
+  }
+
+  network_interface {
+    network = google_compute_network.vpc_network.name
+    access_config {} # Needed for external IP
+  }
+
+  # Run deployment.sh automatically on boot
+  metadata_startup_script = file("${path.module}/deployment.sh")
 }
