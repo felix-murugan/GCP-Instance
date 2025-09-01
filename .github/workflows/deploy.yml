@@ -18,21 +18,20 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
-      # Save service account JSON from secret into a file
-      - name: Write GCP credentials to file
-        run: echo '${{ secrets.GCP_SA_KEY }}' > $HOME/gcp-key.json
-        shell: bash
+      # Authenticate with GCP using service account JSON from GitHub Secrets
+      - name: Authenticate to GCP
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      # Setup gcloud CLI and authenticate
+      # Install gcloud CLI (auth is already handled above)
       - name: Setup gcloud CLI
         uses: google-github-actions/setup-gcloud@v2
         with:
-          project_id: ${{ secrets.GCP_PROJECT }}
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
-          export_default_credentials: true
           install_components: gke-gcloud-auth-plugin
 
-      # Debug step - confirm authentication worked
+      # Debug step (optional) - confirm authentication worked
       - name: Verify gcloud authentication
         run: |
           gcloud auth list
@@ -41,23 +40,15 @@ jobs:
       # Terraform Init
       - name: Terraform Init
         run: terraform init
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: $HOME/gcp-key.json
 
       # Terraform Plan
       - name: Terraform Plan
         run: terraform plan -out=tfplan
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: $HOME/gcp-key.json
 
       # Terraform Apply
       - name: Terraform Apply
         run: terraform apply -auto-approve tfplan
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: $HOME/gcp-key.json
 
       # Show Terraform Outputs (e.g. VM external IP)
       - name: Show VM Outputs
         run: terraform output
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: $HOME/gcp-key.json
