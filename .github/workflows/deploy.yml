@@ -18,20 +18,23 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
-      # Authenticate with GCP using service account JSON from GitHub Secrets
-      - name: Authenticate to GCP
-        id: auth
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+      # Save service account JSON from secret into a file
+      - name: Write GCP credentials to file
+        run: |
+          echo "${{ secrets.GCP_SA_KEY }}" > $HOME/gcp-key.json
+        shell: bash
 
-      # Install gcloud CLI (auth is already handled above)
+      # Authenticate with GCP
+      - name: Authenticate to GCP
+        run: gcloud auth activate-service-account --key-file=$HOME/gcp-key.json
+
+      # Setup gcloud CLI
       - name: Setup gcloud CLI
         uses: google-github-actions/setup-gcloud@v2
         with:
           install_components: gke-gcloud-auth-plugin
 
-      # Debug step (optional) - confirm authentication worked
+      # Debug step - confirm authentication worked
       - name: Verify gcloud authentication
         run: |
           gcloud auth list
