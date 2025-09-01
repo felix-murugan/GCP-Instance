@@ -8,12 +8,8 @@ terraform {
 }
 
 provider "google" {
-  project     = var.project_id
-  region      = var.region
-  credentials = "digidense-lp.json"
+  project = var.project_id
+  region  = var.region
 }
 
-provider "tls" {
-  // no config needed
-}
-
+provider "tls" {}
