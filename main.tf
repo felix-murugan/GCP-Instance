@@ -1,3 +1,6 @@
+# ==============================
+# Network
+# ==============================
 resource "google_compute_network" "vpc_network" {
   name = "server-networks"
 }
@@ -46,16 +49,14 @@ resource "google_compute_instance" "fastapi_vm" {
 
   network_interface {
     network = google_compute_network.vpc_network.name
-    access_config {} # Needed for external IP
+    access_config {} # External IP
   }
 
   # Run deployment.sh automatically on boot
   metadata_startup_script = file("${path.module}/deployment.sh")
 }
 
-
 output "fastapi_vm_ip" {
   description = "Public IP of the FastAPI VM"
   value       = google_compute_instance.fastapi_vm.network_interface[0].access_config[0].nat_ip
-
 }
