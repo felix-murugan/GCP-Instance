@@ -1,54 +1,34 @@
-name: Deploy to GCP VM
+name: Deploy FastAPI to GCP
 
 on:
-  push:
-    branches:
-      - main   # Trigger on push to main
+  workflow_dispatch:  # manually trigger
 
 jobs:
-  terraform:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout repo
-      - name: Checkout
+      - name: Checkout repo
         uses: actions/checkout@v4
 
-      # Setup Terraform
-      - name: Setup Terraform
+      - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.5
 
-      # Authenticate with GCP using service account JSON from GitHub Secrets
       - name: Authenticate to GCP
-        id: auth
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      # Install gcloud CLI (auth is already handled above)
-      - name: Setup gcloud CLI
-        uses: google-github-actions/setup-gcloud@v2
-        with:
-          install_components: gke-gcloud-auth-plugin
-
-      # Debug step (optional) - confirm authentication worked
-      - name: Verify gcloud authentication
-        run: |
-          gcloud auth list
-          gcloud config list project
-
-      # Terraform Init
-      - name: Terraform Init
+      - name: Init Terraform
         run: terraform init
 
-      # Terraform Plan
-      - name: Terraform Plan
+      - name: Plan Terraform
         run: terraform plan -out=tfplan
 
-      # Terraform Apply
-      - name: Terraform Apply
+      - name: Apply Terraform
         run: terraform apply -auto-approve tfplan
 
-      # Show Terraform Outputs (e.g. VM external IP)
-      - name: Show VM Outputs
-        run: terraform output
+      - name: Show Public IP
+        run: terraform output fastapi_vm_ip
