@@ -57,4 +57,5 @@ resource "google_compute_instance" "fastapi_vm" {
 output "fastapi_vm_ip" {
   description = "Public IP of the FastAPI VM"
   value       = google_compute_instance.fastapi_vm.network_interface[0].access_config[0].nat_ip
+
 }
