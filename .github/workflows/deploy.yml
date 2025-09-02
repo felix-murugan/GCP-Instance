@@ -22,6 +22,12 @@ jobs:
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
+      # 🔎 Debug: show which project the service account key belongs to
+      - name: Show project_id from credentials
+        run: |
+          echo "Project in key:"
+          echo '${{ secrets.GCP_SA_KEY }}' | jq .project_id
+
       - name: Init Terraform
         run: terraform init
 
