@@ -55,10 +55,11 @@ resource "google_compute_instance" "server_vm" {
   }
 
   metadata = {
-    enable-oslogin = "FALSE"
-    startup-script = file("${path.module}/deployment.sh")
-    ssh-keys       = "${split("@", data.google_client_openid_userinfo.me.email)[0]}:${tls_private_key.ssh.public_key_openssh}"
-  }
+  enable-oslogin = "FALSE"
+  startup-script = file("${path.module}/deployment.sh")
+  ssh-keys       = "${var.ssh_user}:${tls_private_key.ssh.public_key_openssh}"
+}
+
 
   metadata_startup_script = file("${path.module}/deployment.sh")
 
