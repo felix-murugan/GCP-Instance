@@ -1,6 +1,3 @@
-# ==============================
-# Network
-# ==============================
 resource "google_compute_network" "vpc_network" {
   name = "server-networks"
 }
@@ -23,7 +20,7 @@ resource "google_compute_firewall" "web_ports" {
 
   allow {
     protocol = "tcp"
-    ports    = ["80", "443", "8080", "3000", "3001", "4000"]
+    ports    = ["80", "443", "8080","3000","3001","4000"]
   }
 
   source_ranges = ["0.0.0.0/0"]
@@ -31,32 +28,116 @@ resource "google_compute_firewall" "web_ports" {
   target_tags = ["web-enabled"]
 }
 
-# ==============================
-# Compute Instance
-# ==============================
-resource "google_compute_instance" "fastapi_vm" {
-  name         = "fastapi-server"
+data "google_client_openid_userinfo" "me" {}
+
+resource "tls_private_key" "ssh" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+resource "google_compute_instance" "centos_vm" {
+  count        = var.instance_count
+  name         = "server-${count.index + 1}"
   machine_type = "e2-medium"
   zone         = var.zone
 
-  tags = ["web-enabled"]
 
   boot_disk {
     initialize_params {
-      image = "debian-cloud/debian-11"
+      image = "centos-stream-9-v20250610"
+      labels = {
+        my_label = "value"
+      }
     }
   }
 
   network_interface {
     network = google_compute_network.vpc_network.name
-    access_config {} # External IP
+
+    access_config {}
+    
   }
 
-  # Run deployment.sh automatically on boot
-  metadata_startup_script = file("${path.module}/deployment.sh")
+  metadata = {
+    enable-oslogin = "FALSE"
+    startup-script = file("${path.module}/resource "google_compute_network" "vpc_network" {
+  name = "server-networks"
 }
 
-output "fastapi_vm_ip" {
-  description = "Public IP of the FastAPI VM"
-  value       = google_compute_instance.fastapi_vm.network_interface[0].access_config[0].nat_ip
+resource "google_compute_firewall" "ssh" {
+  name    = "allow-ssh"
+  network = google_compute_network.vpc_network.name
+
+  allow {
+    protocol = "tcp"
+    ports    = ["22"]
+  }
+
+  source_ranges = ["0.0.0.0/0"]
 }
+
+resource "google_compute_firewall" "web_ports" {
+  name    = "allow-web-traffic"
+  network = google_compute_network.vpc_network.name
+
+  allow {
+    protocol = "tcp"
+    ports    = ["80", "443", "8080","3000","3001","4000"]
+  }
+
+  source_ranges = ["0.0.0.0/0"]
+
+  target_tags = ["web-enabled"]
+}
+
+data "google_client_openid_userinfo" "me" {}
+
+resource "tls_private_key" "ssh" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+resource "google_compute_instance" "centos_vm" {
+  count        = var.instance_count
+  machine_type = "e2-medium"
+  zone         = var.zone
+
+
+  boot_disk {
+    initialize_params {
+      image = "centos-stream-9-v20250610"
+      labels = {
+        my_label = "value"
+      }
+    }
+  }
+
+  network_interface {
+    network = google_compute_network.vpc_network.name
+
+    access_config {}
+    
+  }
+
+  metadata = {
+    enable-oslogin = "FALSE"
+    startup-script = file("${path.module}/deployment.sh")
+    ssh-keys       = "${split("@", data.google_client_openid_userinfo.me.email)[0]}:${tls_private_key.ssh.public_key_openssh}"
+  }
+  metadata_startup_script = file("${path.module}/deployment.sh")
+
+  tags = ["ssh-enabled", "web-enabled"]
+
+
+}
+
+")
+    ssh-keys       = "${split("@", data.google_client_openid_userinfo.me.email)[0]}:${tls_private_key.ssh.public_key_openssh}"
+  }
+  metadata_startup_script = file("${path.module}/startup.sh")
+
+  tags = ["ssh-enabled", "web-enabled"]
+
+
+}
+
