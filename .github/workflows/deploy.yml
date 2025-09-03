@@ -1,11 +1,20 @@
-name: Deploy FastAPI to GCP
+name: Terraform GCP Deployment
 
 on:
-  workflow_dispatch:  # manual trigger
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REGION: us-central1-a
+  ZONE: us-central1-a
 
 jobs:
-  deploy:
+  terraform:
     runs-on: ubuntu-latest
+   
 
     steps:
       - name: Checkout repo
@@ -14,28 +23,21 @@ jobs:
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: 1.9.5
+          terraform_version: 1.9.8
 
-      - name: Authenticate to GCP
-        id: auth
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
-
-      # 🔎 Debug: show which project the service account key belongs to
-      - name: Show project_id from credentials
+      - name: Decode GCP credentials
         run: |
-          echo "Project in key:"
-          echo '${{ secrets.GCP_SA_KEY }}' | jq .project_id
+          echo "${{ secrets.GCP_SA_KEY }}" | base64 -d > ${HOME}/gcp-key.json
 
-      - name: Init Terraform
+      - name: Terraform Init
         run: terraform init
 
-      - name: Plan Terraform
-        run: terraform plan -out=tfplan
+      - name: Terraform Validate
+        run: terraform validate
 
-      - name: Apply Terraform
+      - name: Terraform Plan
+        run: terraform plan -var="project_id=${{ env.PROJECT_ID }}" -var="region=${{ env.REGION }}" -var="zone=${{ env.ZONE }}" -out=tfplan
+
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main'
         run: terraform apply -auto-approve tfplan
-
-      - name: Show Public IP
-        run: terraform output fastapi_vm_ip
