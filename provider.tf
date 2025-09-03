@@ -8,13 +8,14 @@ terraform {
 }
 
 provider "google" {
-  project     = var.project_id
-  region      = var.region
-  credentials = "digidense-lp.json"
+  project = var.project_id
+  region  = var.region
+  zone    = var.zone
+  # No "credentials" here — it will use GOOGLE_APPLICATION_CREDENTIALS from the workflow
 }
 
 provider "tls" {
-  // no config needed
+  # no config needed
 }
 
 resource "local_file" "ssh_private_key_pem" {
