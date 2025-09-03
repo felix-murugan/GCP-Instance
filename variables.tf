@@ -13,3 +13,11 @@ variable "zone" {
   description = "Zone to deploy into"
   default     = "us-central1-a"
 }
+
+
+variable "ssh_user" {
+  description = "Linux username for SSH access"
+  type        = string
+  default     = "terraform"
+}
+
