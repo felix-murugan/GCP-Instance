@@ -20,7 +20,7 @@ resource "google_compute_firewall" "web_ports" {
 
   allow {
     protocol = "tcp"
-    ports    = ["80", "443", "8080","3000","3001","4000"]
+    ports    = ["80", "443", "8080", "3000", "3001", "4000"]
   }
 
   source_ranges = ["0.0.0.0/0"]
@@ -35,11 +35,10 @@ resource "tls_private_key" "ssh" {
   rsa_bits  = 4096
 }
 
-resource "google_compute_instance" "centos_vm" {
-  count        = var.instance_count
+resource "google_compute_instance" "server_vm" {
+  name         = "server-1"     
   machine_type = "e2-medium"
   zone         = var.zone
-
 
   boot_disk {
     initialize_params {
@@ -52,9 +51,7 @@ resource "google_compute_instance" "centos_vm" {
 
   network_interface {
     network = google_compute_network.vpc_network.name
-
     access_config {}
-    
   }
 
   metadata = {
@@ -62,10 +59,8 @@ resource "google_compute_instance" "centos_vm" {
     startup-script = file("${path.module}/deployment.sh")
     ssh-keys       = "${split("@", data.google_client_openid_userinfo.me.email)[0]}:${tls_private_key.ssh.public_key_openssh}"
   }
+
   metadata_startup_script = file("${path.module}/deployment.sh")
 
   tags = ["ssh-enabled", "web-enabled"]
-
-
 }
-
