@@ -24,9 +24,9 @@ jobs:
         with:
           terraform_version: 1.9.8
 
-      - name: Decode and Save GCP Credentials
+      - name: Save GCP Credentials
         run: |
-          echo "${{ secrets.GCP_SA_KEY }}" | base64 --decode > $HOME/gcp-key.json
+          echo '${{ secrets.GCP_SA_KEY }}' > $HOME/gcp-key.json
 
       - name: Set up Google Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
