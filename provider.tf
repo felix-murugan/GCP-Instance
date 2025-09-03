@@ -5,14 +5,20 @@ terraform {
       version = "6.33.0"
     }
   }
-
-  required_version = ">= 1.5.0"
 }
 
 provider "google" {
-  project = var.project_id
-  region  = var.region
-  zone    = var.zone
+  project     = var.project_id
+  region      = var.region
+  credentials = "digidense-lp.json"
 }
 
-provider "tls" {}
+provider "tls" {
+  // no config needed
+}
+
+resource "local_file" "ssh_private_key_pem" {
+  content         = tls_private_key.ssh.private_key_pem
+  filename        = ".ssh/google_compute_engine"
+  file_permission = "0600"
+}
