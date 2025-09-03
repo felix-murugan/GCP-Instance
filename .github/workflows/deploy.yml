@@ -16,6 +16,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Checkout repo
       - name: Checkout repo
         uses: actions/checkout@v4
 
@@ -30,16 +31,23 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
+          install_components: "gke-gcloud-auth-plugin"
 
-      # Initialize Terraform
+      # Set up Terraform
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
 
+      # Terraform Init
       - name: Terraform Init
         run: terraform init
 
+      # Terraform Plan
       - name: Terraform Plan
         run: terraform plan -out=tfplan
 
+      # Terraform Apply (only on main branch pushes, not on PRs)
       - name: Terraform Apply
+        if: github.ref == 'refs/heads/main'
         run: terraform apply -auto-approve tfplan
