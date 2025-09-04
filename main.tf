@@ -20,7 +20,7 @@ resource "google_compute_firewall" "web_ports" {
 
   allow {
     protocol = "tcp"
-    ports    = ["80", "443", "8080", "3000", "3001", "4000"]
+    ports    = ["80", "443", "8000", "5432"]
   }
 
   source_ranges = ["0.0.0.0/0"]
