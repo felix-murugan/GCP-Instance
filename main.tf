@@ -49,29 +49,7 @@ resource "google_compute_instance" "server_vm" {
     }
   }
 
-  network_interface {
-    network = google_compute_network.vpc_network.name
-    access_config {}
-  }
-
-  resource "google_compute_instance" "server_vm" {
-  name         = "server-1"
-  machine_type = "e2-medium"
-  zone         = var.zone
-
-  boot_disk {
-    initialize_params {
-      image = "centos-stream-9-v20250610"
-      labels = {
-        my_label = "value"
-      }
-    }
-  }
-
-  network_interface {
-    network = google_compute_network.vpc_network.name
-    access_config {}
-  }
+ 
 
   # Inline startup script (no external file dependency)
   metadata = {
