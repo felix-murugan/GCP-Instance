@@ -49,6 +49,10 @@ resource "google_compute_instance" "server_vm" {
     }
   }
 
+network_interface {
+    network       = google_compute_network.vpc_network.name
+    access_config {}
+
  
 
   # Inline startup script (no external file dependency)
