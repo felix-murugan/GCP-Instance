@@ -3,7 +3,7 @@ set -xe
 exec > >(tee /var/log/startup.log|logger -t startup-script) 2>&1
 
 # ===== Update & install dependencies =====
-yum update -y
+yum makecache
 yum install -y python3 python3-pip git postgresql postgresql-server postgresql-contrib
 
 # ===== Initialize PostgreSQL =====
