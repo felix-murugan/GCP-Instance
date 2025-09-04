@@ -1,16 +1,16 @@
 #!/bin/bash
 
 set -xe
-exec > >(tee /var/log/startup.log|logger -t startup-script) 2>&1
+exec > >(tee /var/log/startup.log | logger -t startup-script | tee /dev/ttyS0) 2>&1
 
 # ===== Update & install dependencies =====
-sudo yum update -y
-sudo yum install -y python3 python3-pip git postgresql postgresql-server postgresql-contrib
+yum -y update
+yum install -y python3 python3-pip git postgresql postgresql-server postgresql-contrib
 
 # ===== Initialize PostgreSQL =====
-sudo /usr/bin/postgresql-setup --initdb
-sudo systemctl enable postgresql
-sudo systemctl start postgresql
+/usr/bin/postgresql-setup --initdb
+systemctl enable postgresql
+systemctl start postgresql
 
 # ===== Configure PostgreSQL DB =====
 sudo -u postgres psql <<EOF
@@ -21,16 +21,16 @@ EOF
 
 # ===== Configure pg_hba.conf for password authentication =====
 PG_HBA=$(find /var/lib/pgsql -name pg_hba.conf | head -n 1)
-sudo sed -i 's/^\(local\s\+all\s\+all\s\+\)peer/\1md5/' $PG_HBA || true
-sudo sed -i 's/^\(local\s\+all\s\+all\s\+\)ident/\1md5/' $PG_HBA || true
-sudo sed -i 's/^\(host\s\+all\s\+all\s\+127.0.0.1\/32\s\+\)ident/\1md5/' $PG_HBA || true
-sudo sed -i 's/^\(host\s\+all\s\+all\s\+::1\/128\s\+\)ident/\1md5/' $PG_HBA || true
+sed -i 's/^\(local\s\+all\s\+all\s\+\)peer/\1md5/' $PG_HBA || true
+sed -i 's/^\(local\s\+all\s\+all\s\+\)ident/\1md5/' $PG_HBA || true
+sed -i 's/^\(host\s\+all\s\+all\s\+127.0.0.1\/32\s\+\)ident/\1md5/' $PG_HBA || true
+sed -i 's/^\(host\s\+all\s\+all\s\+::1\/128\s\+\)ident/\1md5/' $PG_HBA || true
 
-sudo systemctl restart postgresql
+systemctl restart postgresql
 
 # ===== Ensure app user exists =====
 if ! id "sajin_pub" &>/dev/null; then
-    sudo useradd -m sajin_pub
+    useradd -m sajin_pub
 fi
 
 # ===== Clone FastAPI repo =====
@@ -48,7 +48,7 @@ cd /opt/test_application/learning_app
 pip3 install --no-cache-dir -r requirements.txt
 
 # ===== Create systemd service =====
-sudo tee /etc/systemd/system/fastapi.service > /dev/null <<EOF
+cat >/etc/systemd/system/fastapi.service <<EOF
 [Unit]
 Description=FastAPI App
 After=network.target postgresql.service
@@ -66,10 +66,10 @@ WantedBy=multi-user.target
 EOF
 
 # ===== Reload and start FastAPI service =====
-sudo systemctl daemon-reexec
-sudo systemctl daemon-reload
-sudo systemctl enable fastapi
-sudo systemctl restart fastapi
+systemctl daemon-reexec
+systemctl daemon-reload
+systemctl enable fastapi
+systemctl restart fastapi
 
 # ===== Show FastAPI status =====
-sudo systemctl status fastapi --no-pager -l
+systemctl status fastapi --no-pager -l
