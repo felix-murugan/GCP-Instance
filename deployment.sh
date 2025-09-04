@@ -1,34 +1,40 @@
 #!/bin/bash
-set -xe
-exec > >(tee /var/log/startup.log|logger -t startup-script) 2>&1
+set -x
+exec > >(tee /var/log/startup.log | logger -t startup-script) 2>&1
 
-# ===== Update & install dependencies =====
+# ===== Install dependencies =====
 yum makecache
-yum install -y python3 python3-pip git postgresql postgresql-server postgresql-contrib
+yum install -y python3 python3-pip git postgresql13 postgresql13-server postgresql13-contrib
 
 # ===== Initialize PostgreSQL =====
-postgresql-setup --initdb
-systemctl enable postgresql
-systemctl start postgresql
+if [ ! -d "/var/lib/pgsql/13/data/base" ]; then
+  /usr/pgsql-13/bin/postgresql-13-setup initdb
+fi
+
+systemctl enable postgresql-13
+systemctl start postgresql-13
 sleep 5
 
 # ===== Configure PostgreSQL DB =====
-sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'admin12';"
-sudo -u postgres psql -c "CREATE DATABASE kasadara;"
-sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE kasadara TO postgres;"
+sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'admin12';" || true
+sudo -u postgres psql -tc "SELECT 1 FROM pg_database WHERE datname = 'kasadara';" | grep -q 1 || \
+  sudo -u postgres psql -c "CREATE DATABASE kasadara;"
+sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE kasadara TO postgres;" || true
 
 # ===== Configure pg_hba.conf for password authentication =====
-PG_HBA="/var/lib/pgsql/data/pg_hba.conf"
-sed -i 's/^\(local\s\+all\s\+all\s\+\)peer/\1md5/' $PG_HBA || true
-sed -i 's/^\(local\s\+all\s\+all\s\+\)ident/\1md5/' $PG_HBA || true
-sed -i 's/^\(host\s\+all\s\+all\s\+127.0.0.1\/32\s\+\)ident/\1md5/' $PG_HBA || true
-sed -i 's/^\(host\s\+all\s\+all\s\+::1\/128\s\+\)ident/\1md5/' $PG_HBA || true
-systemctl restart postgresql
+PG_HBA="/var/lib/pgsql/13/data/pg_hba.conf"
+if [ -f "$PG_HBA" ]; then
+  sed -i 's/^\(local\s\+all\s\+all\s\+\)peer/\1md5/' $PG_HBA || true
+  sed -i 's/^\(local\s\+all\s\+all\s\+\)ident/\1md5/' $PG_HBA || true
+  sed -i 's/^\(host\s\+all\s\+all\s\+127.0.0.1\/32\s\+\)ident/\1md5/' $PG_HBA || true
+  sed -i 's/^\(host\s\+all\s\+all\s\+::1\/128\s\+\)ident/\1md5/' $PG_HBA || true
+  systemctl restart postgresql-13
+fi
 
 # ===== Clone FastAPI repo =====
 cd /opt
 if [ ! -d "test_application" ]; then
-    git clone https://github.com/digidense/test_application.git
+  git clone https://github.com/digidense/test_application.git
 fi
 
 cd test_application
@@ -46,7 +52,7 @@ id -u sajin_pub &>/dev/null || useradd -m sajin_pub
 tee /etc/systemd/system/fastapi.service > /dev/null <<EOF
 [Unit]
 Description=FastAPI App
-After=network.target postgresql.service
+After=network.target postgresql-13.service
 
 [Service]
 User=sajin_pub
