@@ -28,7 +28,7 @@ jobs:
 
       - name: Fix script permissions
         run: |
-          sudo yum install -y dos2unix
+          sudo apt-get install -y dos2unix
           dos2unix deployment.sh
           chmod +x deployment.sh
 
