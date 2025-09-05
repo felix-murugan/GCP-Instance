@@ -63,5 +63,5 @@ resource "google_compute_instance" "server_vm" {
 
   tags = ["ssh-enabled", "web-enabled"]
 
-  tags = ["ssh-enabled", "web-enabled"]
+ 
 }
