@@ -3,8 +3,12 @@
 # Exit immediately if a command fails
 set -xe
 
-# Log everything to /var/log/startup.log and serial console
-exec > >(tee /var/log/deployment.log | logger -t deployment-script | tee /dev/ttyS0) 2>&1
+# Safe logging: log to file + journald + serial (only if available)
+if [ -w /dev/ttyS0 ]; then
+  exec > >(tee -a /var/log/deployment.log | logger -t deployment-script | tee /dev/ttyS0) 2>&1
+else
+  exec > >(tee -a /var/log/deployment.log | logger -t deployment-script) 2>&1
+fi
 
 echo "===== [1/7] Updating system and installing dependencies ====="
 yum -y update
