@@ -54,6 +54,7 @@ resource "google_compute_instance" "server_vm" {
     access_config {}
   }
 
+
   metadata = {
     enable-oslogin = "FALSE"
     startup-script = file("${path.module}/deployment.sh")
