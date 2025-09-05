@@ -48,19 +48,18 @@ resource "google_compute_instance" "server_vm" {
       }
     }
   }
-  
+
   network_interface {
     network = google_compute_network.vpc_network.name
     access_config {}
   }
+
   metadata = {
     enable-oslogin = "FALSE"
-    startup-script = file("${path.module}/deployment.sh")
     ssh-keys       = "${split("@", data.google_client_openid_userinfo.me.email)[0]}:${tls_private_key.ssh.public_key_openssh}"
   }
-  metadata_startup_script = file("${path.module}/deployment.sh")
-  tags = ["ssh-enabled", "web-enabled"]
 
+  metadata_startup_script = file("${path.module}/deployment.sh")
+
+  tags = ["ssh-enabled", "web-enabled"]
 }
- 
- 
