@@ -4,7 +4,7 @@
 set -xe
 
 # Log everything to /var/log/startup.log and serial console
-exec > >(tee /var/log/startup.log | logger -t startup-script | tee /dev/ttyS0) 2>&1
+exec > >(tee /var/log/deployment.log | logger -t deployment-script | tee /dev/ttyS0) 2>&1
 
 echo "===== [1/7] Updating system and installing dependencies ====="
 yum -y update
