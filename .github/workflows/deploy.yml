@@ -26,6 +26,12 @@ jobs:
       - name: Set up gcloud
         uses: google-github-actions/setup-gcloud@v2
 
+      - name: Fix script permissions
+        run: |
+          sudo yum install -y dos2unix
+          dos2unix deployment.sh
+          chmod +x deployment.sh
+
       - name: Terraform Init
         run: terraform init
 
