@@ -1,69 +1,36 @@
-name: Terraform GCP Deployment
+name: Deploy VM with FastAPI
 
 on:
   push:
     branches:
       - main
-  workflow_dispatch:
-
-env:
-  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  REGION: us-central1
-  ZONE: us-central1-a
 
 jobs:
-  terraform:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout repo
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
-      # Authenticate with Google Cloud
-      - name: Authenticate to GCP
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
-
-      # Set up gcloud
-      - name: Set up gcloud
-        uses: google-github-actions/setup-gcloud@v2
-        with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
-
-      # Set up Terraform
-      - name: Set up Terraform
+      - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_wrapper: false
+          terraform_version: 1.8.5
 
-      # Terraform Init
+      - name: Authenticate with GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
       - name: Terraform Init
         run: terraform init
 
-      # Terraform Plan
       - name: Terraform Plan
         run: terraform plan -out=tfplan
 
-      # Terraform Apply
       - name: Terraform Apply
-        if: github.ref == 'refs/heads/main'
         run: terraform apply -auto-approve tfplan
-
-      # Wait for FastAPI health check
-      - name: Wait for FastAPI health check
-        if: github.ref == 'refs/heads/main'
-        run: |
-          VM_IP=$(gcloud compute instances describe server-1 --zone=${{ env.ZONE }} --format='get(networkInterfaces[0].accessConfigs[0].natIP)')
-          echo "🌍 VM IP: $VM_IP"
-          for i in {1..30}; do
-            if curl -s "http://$VM_IP:8000/healthz" > /dev/null; then
-              echo "✅ FastAPI is up!"
-              exit 0
-            fi
-            echo "⏳ Waiting for FastAPI... ($i/30)"
-            sleep 20
-          done
-          echo "❌ FastAPI did not respond in time"
-          exit 1
