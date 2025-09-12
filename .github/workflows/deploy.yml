@@ -26,6 +26,14 @@ jobs:
       - name: Set up gcloud
         uses: google-github-actions/setup-gcloud@v2
 
+
+      - name: Create s3 bucket
+        run: | 
+            cd backend-setup
+            terraform init
+            terraform plan
+            terraform apply
+
       - name: Fix script permissions
         run: |
           sudo apt-get install -y dos2unix
