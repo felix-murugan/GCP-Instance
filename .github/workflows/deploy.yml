@@ -31,8 +31,9 @@ jobs:
         run: | 
             cd backend-setup
             terraform init
-            terraform plan
-            terraform apply
+            terraform plan -out=tfplan
+            terraform apply -auto-approve tfplan
+
 
       - name: Fix script permissions
         run: |
