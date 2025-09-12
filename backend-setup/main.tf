@@ -9,7 +9,7 @@ provider "google" {
   region  = "us-central1"
 }
 
-resource "google_storage_bucket" "tf_state" {
+resource "google_storage_bucket" "tfstate22" {
   name                        = "my-terraform-state-bucket"  # Must match your main backend
   location                    = "us-central1"
   uniform_bucket_level_access = true
