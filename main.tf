@@ -65,3 +65,12 @@ resource "google_compute_instance" "server_vm" {
 
  
 }
+
+
+terraform {
+  backend "gcs" {
+    bucket  = "my-terraform-state-bucket"   # Replace with your GCS bucket
+    prefix  = "server-vm"                   # Acts like a folder inside the bucket
+  }
+}
+
