@@ -3,43 +3,39 @@ name: Terraform GCP Destroy
 on:
   workflow_dispatch:   # Manual trigger only
 
-env:
-  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  REGION: us-central1-a
-  ZONE: us-central1-a
-
 jobs:
   terraform-destroy:
     runs-on: ubuntu-latest
+    env:
+      GOOGLE_CLOUD_KEYFILE_JSON: ${{ secrets.GCP_SA_KEY }}
+      PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+      REGION: us-central1
+      ZONE: us-central1-a
 
     steps:
-      # Checkout repo
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      # Authenticate with Google Cloud
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      # (Optional) Set up gcloud CLI
       - name: Set up gcloud
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
-          install_components: "gke-gcloud-auth-plugin"
 
-      # Set up Terraform
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_wrapper: false
+          terraform_version: 1.8.5   # same as deploy
 
-      # Terraform Init
       - name: Terraform Init
         run: terraform init
 
-      # Terraform Destroy
+      - name: Show Terraform State (debug)
+        run: terraform state list || echo "No resources in state"
+
       - name: Terraform Destroy
         run: terraform destroy -auto-approve
