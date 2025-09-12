@@ -6,11 +6,6 @@ on:
 jobs:
   terraform-destroy:
     runs-on: ubuntu-latest
-    env:
-      GOOGLE_CLOUD_KEYFILE_JSON: ${{ secrets.GCP_SA_KEY }}
-      PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-      REGION: us-central1
-      ZONE: us-central1-a
 
     steps:
       - name: Checkout repo
@@ -29,7 +24,7 @@ jobs:
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: 1.8.5   # same as deploy
+          terraform_version: 1.8.5
 
       - name: Terraform Init
         run: terraform init
