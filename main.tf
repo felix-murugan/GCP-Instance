@@ -1,9 +1,9 @@
 resource "google_compute_network" "vpc_network" {
-  name = "server-networks"
+  name = "sample-networks"
 }
 
 resource "google_compute_firewall" "ssh" {
-  name    = "allow-ssh"
+  name    = "sample-allow-ssh"
   network = google_compute_network.vpc_network.name
 
   allow {
@@ -15,12 +15,12 @@ resource "google_compute_firewall" "ssh" {
 }
 
 resource "google_compute_firewall" "web_ports" {
-  name    = "allow-web-traffic"
+  name    = "sample-allow-web-traffic"
   network = google_compute_network.vpc_network.name
 
   allow {
     protocol = "tcp"
-    ports    = ["80", "443", "8000", "5432"]
+    ports    = ["80", "443", "8000", ]
   }
 
   source_ranges = ["0.0.0.0/0"]
@@ -36,7 +36,7 @@ resource "tls_private_key" "ssh" {
 }
 
 resource "google_compute_instance" "server_vm" {
-  name         = "server-1"
+  name         = "netser-1"
   machine_type = "e2-medium"
   zone         = var.zone
 
@@ -70,7 +70,7 @@ resource "google_compute_instance" "server_vm" {
 terraform {
   backend "gcs" {
     bucket  = "my-terraform-state-bucket"   # Replace with your GCS bucket
-    prefix  = "server-vm"                   # Acts like a folder inside the bucket
+    prefix  = "netser-vm"                   # Acts like a folder inside the bucket
   }
 }
 
