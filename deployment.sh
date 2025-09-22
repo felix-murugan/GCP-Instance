@@ -66,14 +66,15 @@ After=network.target postgresql.service
 [Service]
 User=sajin_pub
 Group=sajin_pub
-WorkingDirectory=/opt/test_application/learning_app
-ExecStart=/usr/bin/python3 -m uvicorn main:app --host 0.0.0.0 --port 8000
+WorkingDirectory=/opt/test_application
+ExecStart=/usr/bin/python3 -m uvicorn learning_app.main:app --host 0.0.0.0 --port 8000
 Restart=always
 Environment="PATH=/usr/local/bin:/usr/bin"
 
 [Install]
 WantedBy=multi-user.target
 EOF
+
 
 echo "===== Enabling and starting FastAPI service ====="
 systemctl daemon-reexec
