@@ -27,12 +27,12 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
 
 
-      - name: Create s3 bucket
-        run: | 
-            cd backend-setup
-            terraform init
-            terraform plan -out=tfplan
-            terraform apply -auto-approve tfplan
+      # - name: Create s3 bucket
+      #   run: | 
+      #       cd backend-setup
+      #       terraform init
+      #       terraform plan -out=tfplan
+      #       terraform apply -auto-approve tfplan
 
 
       - name: Fix script permissions
