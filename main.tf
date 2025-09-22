@@ -1,9 +1,9 @@
 resource "google_compute_network" "vpc_network" {
-  name = "sample-networks"
+  name = "server-networks"
 }
 
 resource "google_compute_firewall" "ssh" {
-  name    = "sample-allow-ssh"
+  name    = "allow-ssh-2"
   network = google_compute_network.vpc_network.name
 
   allow {
@@ -15,12 +15,12 @@ resource "google_compute_firewall" "ssh" {
 }
 
 resource "google_compute_firewall" "web_ports" {
-  name    = "sample-allow-web-traffic"
+  name    = "allow-web-traffic-2"
   network = google_compute_network.vpc_network.name
 
   allow {
     protocol = "tcp"
-    ports    = ["80", "443", "8000", ]
+    ports    = ["80", "443", "8000", "5432"]
   }
 
   source_ranges = ["0.0.0.0/0"]
@@ -36,7 +36,7 @@ resource "tls_private_key" "ssh" {
 }
 
 resource "google_compute_instance" "server_vm" {
-  name         = "netser-1"
+  name         = "server-2"
   machine_type = "e2-medium"
   zone         = var.zone
 
@@ -63,14 +63,10 @@ resource "google_compute_instance" "server_vm" {
 
   tags = ["ssh-enabled", "web-enabled"]
 
- 
 }
 
 
-terraform {
-  backend "gcs" {
-    bucket  = "my-terraform-state-bucket"   # Replace with your GCS bucket
-    prefix  = "server_vm"                   # Acts like a folder inside the bucket
-  }
+output "server_vm_ip" {
+  description = "Public IP address of the server VM"
+  value       = google_compute_instance.server_vm.network_interface[0].access_config[0].nat_ip
 }
-
