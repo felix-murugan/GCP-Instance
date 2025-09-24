@@ -63,10 +63,9 @@ resource "google_compute_instance" "server_vm" {
   metadata = {
   enable-oslogin = "FALSE"
 
-  # Use single-quoted heredoc to prevent Terraform interpolation
-  startup-script = <<'EOT'
+  startup-script = <<EOT
 #!/bin/bash
-export GITHUB_TOKEN="${GITHUB_TOKEN}"
+export GITHUB_TOKEN="\${GITHUB_TOKEN}"
 /bin/bash /deployment.sh
 EOT
 
