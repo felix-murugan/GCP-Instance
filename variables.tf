@@ -21,3 +21,7 @@ variable "ssh_user" {
   default     = "terraform"
 }
 
+variable "github_token" {
+  type        = string
+  description = "GitHub token for cloning private repo"
+}
