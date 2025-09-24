@@ -1,11 +1,9 @@
-# ===== VPC Network =====
 resource "google_compute_network" "vpc_network" {
   name = "server-networks"
 }
 
-# ===== Firewall Rules =====
 resource "google_compute_firewall" "ssh" {
-  name    = "allow-ssh-2"
+  name    = "allow-ssh"
   network = google_compute_network.vpc_network.name
 
   allow {
@@ -17,7 +15,7 @@ resource "google_compute_firewall" "ssh" {
 }
 
 resource "google_compute_firewall" "web_ports" {
-  name    = "allow-web-traffic-2"
+  name    = "allow-web-traffic"
   network = google_compute_network.vpc_network.name
 
   allow {
@@ -26,53 +24,49 @@ resource "google_compute_firewall" "web_ports" {
   }
 
   source_ranges = ["0.0.0.0/0"]
-  target_tags   = ["web-enabled"]
+
+  target_tags = ["web-enabled"]
 }
 
-# ===== Get current user email for SSH =====
 data "google_client_openid_userinfo" "me" {}
 
-# ===== SSH Key =====
 resource "tls_private_key" "ssh" {
   algorithm = "RSA"
   rsa_bits  = 4096
 }
 
 resource "google_compute_instance" "server_vm" {
-  name         = "server-2"
+  name         = "server-1"
   machine_type = "e2-medium"
   zone         = var.zone
 
   boot_disk {
     initialize_params {
       image = "centos-stream-9-v20250610"
+      labels = {
+        my_label = "value"
+      }
     }
-  } # closes initialize_params
-  } # closes boot_disk
+  }
 
   network_interface {
     network = google_compute_network.vpc_network.name
     access_config {}
   }
 
+
   metadata = {
     enable-oslogin = "FALSE"
-    startup-script = <<EOT
-#!/bin/bash
-export GITHUB_TOKEN="\${GITHUB_TOKEN}"
-/bin/bash /deployment.sh
-EOT
-    ssh-keys = "${split("@", data.google_client_openid_userinfo.me.email)[0]}:${tls_private_key.ssh.public_key_openssh}"
+    startup-script = file("${path.module}/deployment.sh")
+    ssh-keys       = "${split("@", data.google_client_openid_userinfo.me.email)[0]}:${tls_private_key.ssh.public_key_openssh}"
   }
 
   tags = ["ssh-enabled", "web-enabled"]
-} # closes google_compute_instance
+
+}
 
 
-
-# ===== Outputs =====
 output "server_vm_ip" {
   description = "Public IP address of the server VM"
   value       = google_compute_instance.server_vm.network_interface[0].access_config[0].nat_ip
-
 }
