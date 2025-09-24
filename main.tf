@@ -1,3 +1,12 @@
+variable "zone" {
+  default = "us-central1-a"
+}
+
+variable "github_token" {
+  type        = string
+  description = "GitHub token for cloning private repo"
+}
+
 resource "google_compute_network" "vpc_network" {
   name = "server-networks"
 }
@@ -54,17 +63,15 @@ resource "google_compute_instance" "server_vm" {
     access_config {}
   }
 
-
   metadata = {
     enable-oslogin = "FALSE"
+    github_token   = var.github_token
     startup-script = file("${path.module}/deployment.sh")
     ssh-keys       = "${split("@", data.google_client_openid_userinfo.me.email)[0]}:${tls_private_key.ssh.public_key_openssh}"
   }
 
   tags = ["ssh-enabled", "web-enabled"]
-
 }
-
 
 output "server_vm_ip" {
   description = "Public IP address of the server VM"
