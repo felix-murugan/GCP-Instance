@@ -1,3 +1,6 @@
+resource "google_compute_network" "vpc_network" {
+  name = "server-networks"
+}
 
 
 resource "google_compute_firewall" "ssh" {
