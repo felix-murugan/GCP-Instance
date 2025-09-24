@@ -49,4 +49,6 @@ jobs:
         run: terraform plan -out=tfplan
 
       - name: Terraform Apply
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: terraform apply -auto-approve tfplan
