@@ -38,7 +38,6 @@ resource "tls_private_key" "ssh" {
   rsa_bits  = 4096
 }
 
-# ===== Compute Instance =====
 resource "google_compute_instance" "server_vm" {
   name         = "server-2"
   machine_type = "e2-medium"
@@ -47,30 +46,28 @@ resource "google_compute_instance" "server_vm" {
   boot_disk {
     initialize_params {
       image = "centos-stream-9-v20250610"
-      labels = {
-        my_label = "value"
-      }
     }
-  }
+  } # closes initialize_params
+  } # closes boot_disk
 
   network_interface {
-    network       = google_compute_network.vpc_network.name
+    network = google_compute_network.vpc_network.name
     access_config {}
   }
 
-  tags = ["ssh-enabled", "web-enabled"]
-
   metadata = {
-  enable-oslogin = "FALSE"
-
-  startup-script = <<EOT
+    enable-oslogin = "FALSE"
+    startup-script = <<EOT
 #!/bin/bash
 export GITHUB_TOKEN="\${GITHUB_TOKEN}"
 /bin/bash /deployment.sh
 EOT
+    ssh-keys = "${split("@", data.google_client_openid_userinfo.me.email)[0]}:${tls_private_key.ssh.public_key_openssh}"
+  }
 
-  ssh-keys = "${split("@", data.google_client_openid_userinfo.me.email)[0]}:${tls_private_key.ssh.public_key_openssh}"
-}
+  tags = ["ssh-enabled", "web-enabled"]
+} # closes google_compute_instance
+
 
 
 # ===== Outputs =====
