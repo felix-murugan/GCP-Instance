@@ -26,16 +26,6 @@ jobs:
       - name: Set up gcloud
         uses: google-github-actions/setup-gcloud@v2
 
-
-      # - name: Create s3 bucket
-      #   run: | 
-      #       cd backend-setup
-      #       terraform init
-      #       terraform plan -out=tfplan
-      #       terraform apply -auto-approve tfplan
-
-
-
       - name: Fix script permissions
         run: |
           sudo apt-get install -y dos2unix
@@ -45,9 +35,5 @@ jobs:
       - name: Terraform Init
         run: terraform init
 
-      - name: Terraform Plan
-        run: terraform plan -out=tfplan -var="github_token=${{ secrets.GITHUB_TOKEN }}"
-
-
       - name: Terraform Apply
-        run: terraform apply -auto-approve tfplan
+        run: terraform apply -auto-approve -var="github_token=${{ secrets.GITHUB_TOKEN }}" -var="zone=us-central1-a"
