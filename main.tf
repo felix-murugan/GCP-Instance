@@ -78,3 +78,5 @@ resource "google_compute_instance" "server_vm" {
 output "server_vm_ip" {
   description = "Public IP address of the server VM"
   value       = google_compute_instance.server_vm.network_interface[0].access_config[0].nat_ip
+
+}
