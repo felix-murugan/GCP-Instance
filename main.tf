@@ -1,15 +1,4 @@
-variable "zone" {
-  default = "us-central1-a"
-}
 
-variable "github_token" {
-  type        = string
-  description = "GitHub token for cloning private repo"
-}
-
-resource "google_compute_network" "vpc_network" {
-  name = "server-networks"
-}
 
 resource "google_compute_firewall" "ssh" {
   name    = "allow-ssh"
