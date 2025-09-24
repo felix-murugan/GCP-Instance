@@ -61,18 +61,18 @@ resource "google_compute_instance" "server_vm" {
   tags = ["ssh-enabled", "web-enabled"]
 
   metadata = {
-    enable-oslogin = "FALSE"
+  enable-oslogin = "FALSE"
 
-    # ===== Inject GitHub Token into startup script =====
-    startup-script = <<-EOT
-      #!/bin/bash
-      export GITHUB_TOKEN="${GITHUB_TOKEN}"
-      /bin/bash /deployment.sh
-    EOT
+  # Use single-quoted heredoc to prevent Terraform interpolation
+  startup-script = <<'EOT'
+#!/bin/bash
+export GITHUB_TOKEN="${GITHUB_TOKEN}"
+/bin/bash /deployment.sh
+EOT
 
-    ssh-keys = "${split("@", data.google_client_openid_userinfo.me.email)[0]}:${tls_private_key.ssh.public_key_openssh}"
-  }
+  ssh-keys = "${split("@", data.google_client_openid_userinfo.me.email)[0]}:${tls_private_key.ssh.public_key_openssh}"
 }
+
 
 # ===== Outputs =====
 output "server_vm_ip" {
