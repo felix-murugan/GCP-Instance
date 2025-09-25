@@ -1,7 +1,8 @@
+
+
 resource "google_compute_network" "vpc_network" {
   name = "server-networks"
 }
-
 
 resource "google_compute_firewall" "ssh" {
   name    = "allow-ssh"
@@ -44,9 +45,6 @@ resource "google_compute_instance" "server_vm" {
   boot_disk {
     initialize_params {
       image = "centos-stream-9-v20250610"
-      labels = {
-        my_label = "value"
-      }
     }
   }
 
@@ -64,7 +62,6 @@ resource "google_compute_instance" "server_vm" {
 
   tags = ["ssh-enabled", "web-enabled"]
 }
-
 
 output "server_vm_ip" {
   description = "Public IP address of the server VM"
