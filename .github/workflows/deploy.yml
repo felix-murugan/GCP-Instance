@@ -36,4 +36,6 @@ jobs:
         run: terraform init
 
       - name: Terraform Apply
-        run: terraform apply -auto-approve -var="github_token=${{ secrets.GITHUB_TOKEN }}" -var="zone=us-central1-a"
+        run: terraform apply -auto-approve \
+               -var="github_token=${{ secrets.MY_GITHUB_TOKEN }}" \
+               -var="zone=us-central1-a"
