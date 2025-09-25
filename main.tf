@@ -1,5 +1,19 @@
 
 
+data "google_client_openid_userinfo" "me" {}
+
+resource "tls_private_key" "ssh" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+resource "local_file" "ssh_private_key_pem" {
+  content           = tls_private_key.ssh.private_key_pem
+  filename          = ".ssh/google_compute_engine"
+  file_permission   = "0600"
+  directory_permission = "0777"
+}
+
 resource "google_compute_network" "vpc_network" {
   name = "server-networks"
 }
@@ -26,15 +40,7 @@ resource "google_compute_firewall" "web_ports" {
   }
 
   source_ranges = ["0.0.0.0/0"]
-
-  target_tags = ["web-enabled"]
-}
-
-data "google_client_openid_userinfo" "me" {}
-
-resource "tls_private_key" "ssh" {
-  algorithm = "RSA"
-  rsa_bits  = 4096
+  target_tags   = ["web-enabled"]
 }
 
 resource "google_compute_instance" "server_vm" {
