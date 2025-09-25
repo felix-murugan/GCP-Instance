@@ -1,5 +1,4 @@
 #!/bin/bash
-
 set -xe
 exec > >(tee /var/log/deployment.log | logger -t deployment-script) 2>&1
 
@@ -25,21 +24,18 @@ SERVICE_NAME=fastapi
 yum update -y
 yum install -y git postgresql postgresql-server postgresql-contrib python3 python3-pip -y
 
-# ===== Initialize PostgreSQL if not already =====
-if [ ! -f /var/lib/pgsql/data/PG_VERSION ]; then
-    postgresql-setup --initdb
-fi
-
+# ===== Initialize PostgreSQL =====
+postgresql-setup --initdb || true
 systemctl enable postgresql
 systemctl start postgresql
-sleep 10  # wait for DB fully started
+sleep 5
 
 # ===== Configure PostgreSQL =====
 sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'admin12';"
 sudo -u postgres psql -c "CREATE DATABASE kasadara;" || true
 sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE kasadara TO postgres;"
 
-# ===== Configure pg_hba.conf for password auth =====
+# ===== Configure pg_hba.conf for password authentication =====
 PG_HBA="/var/lib/pgsql/data/pg_hba.conf"
 sed -i 's/^\(local\s\+all\s\+all\s\+\)peer/\1md5/' $PG_HBA || true
 sed -i 's/^\(local\s\+all\s\+all\s\+\)ident/\1md5/' $PG_HBA || true
@@ -54,20 +50,18 @@ id -u sajin_pub &>/dev/null || useradd -m sajin_pub
 cd /opt
 if [ ! -d "$APP_ROOT" ]; then
     git clone https://$GITHUB_TOKEN:x-oauth-basic@github.com/SoftwareStackSolutions/kasadra_backened_repo.git "$APP_ROOT"
-else
-    cd "$APP_ROOT"
-    git fetch origin
 fi
 
 cd "$APP_ROOT"
+git fetch origin
 git checkout feature/python
 git pull origin feature/python
 
-# ===== Fix ownership and permissions =====
+# ===== Fix ownership =====
 chown -R sajin_pub:sajin_pub "$APP_ROOT"
 chmod -R 755 "$APP_ROOT"
 
-# ===== Create Python virtual environment =====
+# ===== Virtual environment setup =====
 if [ ! -d "$VENV_DIR" ]; then
     python3 -m venv "$VENV_DIR"
 fi
@@ -77,13 +71,13 @@ pip install --upgrade pip
 pip install --no-cache-dir -r "$APP_DIR/requirements.txt"
 deactivate
 
-# ===== Patch Python 3.10+ Optional syntax if necessary =====
+# ===== Patch Python 3.10+ syntax if needed =====
 find "$APP_DIR" -name "*.py" | while read file; do
     grep -q "from typing import Optional" "$file" || sed -i '1i from typing import Optional' "$file"
     sed -i -E 's/([a-zA-Z_][a-zA-Z0-9_]*)\s*:\s*([a-zA-Z0-9_]+)\s*\|\s*None/\1: Optional[\2]/g' "$file"
 done
 
-# ===== Create systemd service for FastAPI =====
+# ===== Systemd service =====
 SERVICE_FILE="/etc/systemd/system/$SERVICE_NAME.service"
 tee "$SERVICE_FILE" > /dev/null <<EOF
 [Unit]
@@ -102,11 +96,10 @@ Environment="PATH=$VENV_DIR/bin:/usr/local/bin:/usr/bin"
 WantedBy=multi-user.target
 EOF
 
-# ===== Reload systemd and start service =====
+# ===== Reload and start service =====
 systemctl daemon-reload
 systemctl enable $SERVICE_NAME
 systemctl restart $SERVICE_NAME
 
-# ===== Done =====
 echo "DEBUG: Deployment script completed at $(date)"
 systemctl status $SERVICE_NAME --no-pager -l
