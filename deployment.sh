@@ -20,15 +20,18 @@ APP_DIR=$APP_ROOT/learning_app
 VENV_DIR=$APP_ROOT/venv
 SERVICE_NAME=fastapi
 
-# ===== Update system and install dependencies =====
+# ===== Update system & install dependencies =====
 yum update -y
 yum install -y git postgresql postgresql-server postgresql-contrib python3 python3-pip -y
 
 # ===== Initialize PostgreSQL =====
-postgresql-setup --initdb || true
+if [ ! -f /var/lib/pgsql/data/PG_VERSION ]; then
+    postgresql-setup --initdb
+fi
+
 systemctl enable postgresql
 systemctl start postgresql
-sleep 5
+sleep 10
 
 # ===== Configure PostgreSQL =====
 sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'admin12';"
@@ -46,7 +49,7 @@ systemctl restart postgresql
 # ===== Ensure application user exists =====
 id -u sajin_pub &>/dev/null || useradd -m sajin_pub
 
-# ===== Clone or update FastAPI repository =====
+# ===== Clone or update repository =====
 cd /opt
 if [ ! -d "$APP_ROOT" ]; then
     git clone https://$GITHUB_TOKEN:x-oauth-basic@github.com/SoftwareStackSolutions/kasadra_backened_repo.git "$APP_ROOT"
@@ -57,11 +60,10 @@ git fetch origin
 git checkout feature/python
 git pull origin feature/python
 
-# ===== Fix ownership =====
 chown -R sajin_pub:sajin_pub "$APP_ROOT"
 chmod -R 755 "$APP_ROOT"
 
-# ===== Virtual environment setup =====
+# ===== Python virtualenv =====
 if [ ! -d "$VENV_DIR" ]; then
     python3 -m venv "$VENV_DIR"
 fi
@@ -71,7 +73,7 @@ pip install --upgrade pip
 pip install --no-cache-dir -r "$APP_DIR/requirements.txt"
 deactivate
 
-# ===== Patch Python 3.10+ syntax if needed =====
+# ===== Patch Python 3.10+ Optional syntax =====
 find "$APP_DIR" -name "*.py" | while read file; do
     grep -q "from typing import Optional" "$file" || sed -i '1i from typing import Optional' "$file"
     sed -i -E 's/([a-zA-Z_][a-zA-Z0-9_]*)\s*:\s*([a-zA-Z0-9_]+)\s*\|\s*None/\1: Optional[\2]/g' "$file"
@@ -96,7 +98,6 @@ Environment="PATH=$VENV_DIR/bin:/usr/local/bin:/usr/bin"
 WantedBy=multi-user.target
 EOF
 
-# ===== Reload and start service =====
 systemctl daemon-reload
 systemctl enable $SERVICE_NAME
 systemctl restart $SERVICE_NAME
